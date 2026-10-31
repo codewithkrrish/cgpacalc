@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CGPACalc — Free SGPA &amp; CGPA Calculator</title>
+<meta name="description" content="CGPACalc is a free, browser-side SGPA and CGPA calculator. Add subjects and semesters, use a 10-point or custom grade scale, convert to percentage, plan a target CGPA, and download a printable result card. Nothing is uploaded.">
+<link rel="canonical" href="https://cgpacalc.vercel.app/">
+<meta name="theme-color" content="#0B0B0F">
+<meta property="og:title" content="CGPACalc — Free SGPA &amp; CGPA Calculator">
+<meta property="og:description" content="Calculate SGPA and CGPA in your browser, plan a target CGPA, and download a result card. Your grades never leave your device.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cgpacalc.vercel.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CGPACalc — Free SGPA &amp; CGPA Calculator">
+<meta name="twitter:description" content="Calculate SGPA and CGPA in your browser, plan a target CGPA, and download a result card. Your grades never leave your device.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="./">CGPACalc</a>
+    <span class="topbar-tag">SGPA &middot; CGPA &middot; Target planner &middot; Result card</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>SGPA &amp; CGPA calculator</h1>
+    <p class="lede">Add your subjects, pick grades or type grade points directly, and watch your SGPA and CGPA update live. Everything runs in your browser — your grades are processed locally and never uploaded.</p>
+    <div class="toolbar">
+      <button type="button" class="btn" id="sampleBtn">Load example semester</button>
+      <button type="button" class="btn" id="addSemesterBtn">Add semester</button>
+      <button type="button" class="btn btn-danger" id="clearAllBtn">Clear all</button>
+    </div>
+  </section>
+
+  <section class="panel summary-panel" aria-label="Overall result">
+    <div class="summary-grid">
+      <div class="stat">
+        <span class="stat-label">Overall CGPA</span>
+        <span class="stat-value" id="cgpaValue">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Total credits</span>
+        <span class="stat-value" id="totalCreditsValue">0.0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Approx. percentage</span>
+        <span class="stat-value" id="percentageValue">—</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Semesters</span>
+        <span class="stat-value" id="semesterCountValue">1</span>
+      </div>
+    </div>
+    <p class="note" id="cgpaNote"></p>
+    <div class="factor-row">
+      <label for="factorInput">Percentage conversion factor</label>
+      <input id="factorInput" type="number" min="0.1" step="0.1" value="9.5" aria-label="Percentage conversion factor">
+      <span class="note" id="factorNote"></span>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Semesters and subjects">
+    <h2>Your semesters</h2>
+    <p class="note">Enter credits and either a letter grade or grade points — the two stay in sync. Press Enter inside a subject row to add another row. Rows with 0 credits are ignored in the calculation.</p>
+    <div id="semesterList"></div>
+  </section>
+
+  <section class="panel" aria-label="Target CGPA planner">
+    <h2>What-if: reach a target CGPA</h2>
+    <p class="note">Tell CGPACalc your target and how many credits you still have left, and it works out the average grade points you need from here.</p>
+    <div class="target-row">
+      <label>Target CGPA
+        <input id="targetCgpaInput" type="number" min="0" max="10" step="0.1" placeholder="e.g. 8.5" aria-label="Target CGPA">
+      </label>
+      <label>Remaining credits
+        <input id="remainingCreditsInput" type="number" min="0" step="0.5" placeholder="e.g. 40" aria-label="Remaining credits">
+      </label>
+    </div>
+    <p class="result-line" id="targetResult">Enter a target CGPA and your remaining credits to see the required average.</p>
+  </section>
+
+  <section class="panel" aria-label="Grade distribution">
+    <h2>Grade distribution</h2>
+    <p class="note">Counted credits grouped by grade across all semesters.</p>
+    <ul class="dist-list" id="distributionList"></ul>
+  </section>
+
+  <section class="panel" aria-label="Custom grade scale">
+    <h2>Custom grade scale</h2>
+    <p class="note">Your university may use different points per letter. Edit the points below and every calculation updates. Reset restores the standard 10-point scale (O=10, A+=9, A=8, B+=7, B=6, C=5, P=4, F=0).</p>
+    <div class="scale-grid" id="scaleEditor"></div>
+    <button type="button" class="btn btn-small" id="resetScaleBtn">Reset to standard scale</button>
+  </section>
+
+  <section class="panel" aria-label="Result card">
+    <h2>Result card</h2>
+    <p class="note">A shareable summary of your CGPA, percentage, and per-semester SGPA, rendered locally on canvas. Download it as a PNG or print this page.</p>
+    <div class="card-wrap">
+      <canvas id="resultCanvas" width="1080" height="420" aria-label="Result card preview"></canvas>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="btn" id="downloadCardBtn">Download result card (PNG)</button>
+      <button type="button" class="btn" id="printBtn">Print</button>
+    </div>
+    <p class="note" id="cardStatus"></p>
+  </section>
+
+  <section class="panel" aria-label="Save, import and export">
+    <h2>Save, import &amp; export</h2>
+    <p class="note">Your data saves automatically in this browser and is restored when you return. Export a JSON backup, or import one on another device.</p>
+    <div class="toolbar">
+      <button type="button" class="btn" id="exportBtn">Export JSON</button>
+      <button type="button" class="btn" id="importBtn">Import JSON</button>
+      <button type="button" class="btn btn-danger" id="clearSavedBtn">Clear saved data</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+    <p class="note" id="ioStatus"></p>
+  </section>
+
+  <section class="panel limitations" aria-label="Honest limitations">
+    <h2>Please read: honest limitations</h2>
+    <ul>
+      <li><strong>Grade scales differ by university.</strong> The default 10-point scale (O=10 down to F=0) is common in India but not universal. Check your institution's scale and adjust the custom scale above if yours differs.</li>
+      <li><strong>Percentage conversion is an estimate.</strong> The default factor of 9.5 is widely used, but many universities publish their own formula. CGPACalc labels the result "approximate" for exactly this reason.</li>
+      <li><strong>Failed subjects:</strong> an F counts 0 grade points and its credits still count in the denominator (SGPA over attempted credits), which is the standard rule most universities follow. Some institutions exclude failed credits instead — if yours does, remove the failed row to model that rule.</li>
+      <li><strong>Rounding:</strong> displayed values are rounded to two decimals; the underlying calculation keeps full precision.</li>
+      <li><strong>Local only:</strong> nothing is sent to any server, so there is no account, no sync, and clearing browser storage removes your saved data. Export JSON for a backup.</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <p>Built by krrish &middot; <a href="https://github.com/codewithkrrish/cgpacalc">GitHub</a> &middot; <a href="https://www.instagram.com/krrishx.ai">Instagram</a></p>
+    <p class="muted">Your grades are processed locally in your browser and never uploaded.</p>
+  </div>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
