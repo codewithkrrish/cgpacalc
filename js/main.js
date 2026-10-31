@@ -206,7 +206,7 @@ function renderCard(res) {
   }
   ctx.fillStyle = '#9A9AA5';
   ctx.font = '400 24px Inter, Arial, sans-serif';
-  ctx.fillText('Built by krrish · cgpacalc.vercel.app · Grade scales and conversions vary by university.', 64, height - 36);
+  ctx.fillText('Built by krrish · cgpacalc-tool.vercel.app · Grade scales and conversions vary by university.', 64, height - 36);
   $('cardStatus').textContent = 'Result card ready. Download it as a PNG or print this page.';
 }
 
@@ -230,6 +230,19 @@ function findSubject(el) {
   const sem = findSemester(el);
   return sem.subjects.find((s) => s.id === row.dataset.subject);
 }
+
+/* Mouse-wheel over a focused number input changes its value in Chromium
+   (step 0.5 per notch on credits fields), silently corrupting a grade the
+   user already typed the moment they scroll to another control — e.g. up
+   to "Add semester". Blurring on wheel is the standard fix: the first
+   wheel notch drops focus instead of changing the value, and the page
+   still scrolls normally. Applies to every number input on the page. */
+document.addEventListener('wheel', (e) => {
+  const t = e.target;
+  if (t && t.tagName === 'INPUT' && t.type === 'number') {
+    t.blur();
+  }
+}, { passive: true });
 
 $('semesterList').addEventListener('input', (e) => {
   const t = e.target;
